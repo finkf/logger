@@ -11,9 +11,14 @@ func init() {
 	def = New(os.Stderr, "", log.LstdFlags)
 }
 
-// Default sets the default logger
-func Default(l Logger) {
+// Set sets the default logger.
+func Set(l Logger) {
 	def = l
+}
+
+// Get sets the default logger.
+func Get() Logger {
+	return def
 }
 
 // Printf issues an info-level message with the default logger.

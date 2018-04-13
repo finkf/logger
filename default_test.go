@@ -2,6 +2,7 @@ package logger
 
 import (
 	"bytes"
+	"reflect"
 	"testing"
 )
 
@@ -18,7 +19,11 @@ func TestDefaultLogger(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.want, func(t *testing.T) {
 			buf := &bytes.Buffer{}
-			Default(New(buf, "", 0))
+			l := New(buf, "", 0)
+			Set(l)
+			if !reflect.DeepEqual(l, Get()) {
+				t.Fatalf("invalid default logger")
+			}
 			Debug(tc.edebug)
 			if tc.debug {
 				Debugf(tc.fmt, tc.a, tc.b, tc.c)
