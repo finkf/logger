@@ -1,1 +1,1 @@
-module "github.com/finkf/logger"
+module github.com/finkf/logger
