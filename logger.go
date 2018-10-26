@@ -46,9 +46,9 @@ func (l *Impl) Debug(format string, args ...interface{}) {
 }
 
 func (l *Impl) write(kind, format string, args ...interface{}) {
-	fmt.Fprintf(l.out, "[%s] %s %s\n",
-		kind,
+	fmt.Fprintf(l.out, "%s %s %s\n",
 		time.Now().Format(l.tfmt),
+		kind,
 		fmt.Sprintf(format, args...))
 }
 

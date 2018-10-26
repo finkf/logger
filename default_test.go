@@ -11,8 +11,8 @@ func TestDefaultLogger(t *testing.T) {
 		a, b, c       interface{}
 		edebug, debug bool
 	}{
-		{"[INFO]  1 2 3\n", "%d %d %d", 1, 2, 3, false, false},
-		{"[DEBUG]  1 2 3\n", "%d %d %d", 1, 2, 3, true, true},
+		{" INFO 1 2 3\n", "%d %d %d", 1, 2, 3, false, false},
+		{" DEBUG 1 2 3\n", "%d %d %d", 1, 2, 3, true, true},
 		{"", "%d %d %d", 1, 2, 3, false, true},
 	}
 	for _, tc := range tests {
