@@ -1,37 +1,57 @@
 package logger
 
 import (
-	"log"
-	"os"
+	"sync"
 )
 
-var def Logger
+var (
+	def Logger
+	mut sync.Mutex
+	deb bool
+)
 
 func init() {
-	def = New(os.Stderr, "", log.LstdFlags)
+	def = New()
+}
+
+func withMutex(f func()) {
+	mut.Lock()
+	defer mut.Unlock()
+	f()
 }
 
 // Set sets the default logger.
 func Set(l Logger) {
-	def = l
+	withMutex(func() {
+		def = l
+	})
 }
 
-// Get sets the default logger.
-func Get() Logger {
-	return def
+// Disable disables the logger.
+func Disable() {
+	Set(nilLogger{})
 }
 
-// Printf issues an info-level message with the default logger.
-func Printf(fmt string, args ...interface{}) {
-	def.Printf(fmt, args...)
+// Info issues an info-level message with the default logger.
+func Info(fmt string, args ...interface{}) {
+	withMutex(func() {
+		def.Info(fmt, args...)
+	})
 }
 
-// Debugf issues a debug-level message with the default logger.
-func Debugf(fmt string, args ...interface{}) {
-	def.Debugf(fmt, args...)
+// Debug issues a debug-level message with the default logger.
+func Debug(fmt string, args ...interface{}) {
+	withMutex(func() {
+		if !deb {
+			return
+		}
+		def.Debug(fmt, args...)
+	})
 }
 
-// Debug enables or disables the debug output for the default logger.
-func Debug(debug bool) {
-	def.Debug(debug)
+// EnableDebug enables or disables the debug output for the default logger.
+func EnableDebug(enable bool) {
+	withMutex(func() {
+		deb = enable
+	})
 }

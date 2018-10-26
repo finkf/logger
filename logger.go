@@ -1,51 +1,77 @@
-// Package logger tries to define a
-// simplistic logging interface.
 package logger
 
 import (
+	"fmt"
 	"io"
-	"log"
+	"os"
+	"time"
+)
+
+var (
+	_ Logger = nilLogger{}
+	_ Logger = &Impl{}
+)
+
+const (
+	// DefaultTimeFormat used by the logger.
+	// It is set to ISO-8601.
+	DefaultTimeFormat = time.RFC3339
 )
 
 // Logger defines the main interface for logging.
 type Logger interface {
-	Printf(string, ...interface{}) // issue a debugging message
-	Debugf(string, ...interface{}) // issue a info message
-	Debug(bool)                    // enable/disable debug output
-}
-
-// Nil returns a logger instance with no output
-func Nil() Logger {
-	return nilLogger{}
+	Info(string, ...interface{})  // issue a info message
+	Debug(string, ...interface{}) // issue a debugging message
 }
 
 type nilLogger struct{}
 
-func (nilLogger) Printf(string, ...interface{}) {}
-func (nilLogger) Debugf(string, ...interface{}) {}
-func (nilLogger) Debug(bool)                    {}
+func (nilLogger) Info(string, ...interface{})  {}
+func (nilLogger) Debug(string, ...interface{}) {}
 
-// New returns a new Logger interface that uses go's log.Logger.
-func New(out io.Writer, prefix string, flag int) Logger {
-	return &defaultLogger{l: log.New(out, prefix, flag)}
+// Impl is a basic implementation of the Logger interface.
+type Impl struct {
+	out  io.Writer
+	tfmt string
 }
 
-type defaultLogger struct {
-	l     *log.Logger
-	debug bool
+// Info writes a info message.
+func (l *Impl) Info(format string, args ...interface{}) {
+	l.write("INFO", format, args...)
 }
 
-func (l *defaultLogger) Printf(fmt string, args ...interface{}) {
-	l.l.Printf("[INFO] "+fmt, args...)
+// Debug writes a debug message if not disabled.
+func (l *Impl) Debug(format string, args ...interface{}) {
+	l.write("DEBUG", format, args...)
 }
 
-func (l *defaultLogger) Debugf(fmt string, args ...interface{}) {
-	if !l.debug {
-		return
+func (l *Impl) write(kind, format string, args ...interface{}) {
+	fmt.Fprintf(l.out, "[%s] %s %s\n",
+		kind,
+		time.Now().Format(l.tfmt),
+		fmt.Sprintf(format, args...))
+}
+
+// WithTimeFormat sets the time format of the logger.
+func WithTimeFormat(tfmt string) func(*Impl) {
+	return func(l *Impl) {
+		l.tfmt = tfmt
 	}
-	l.l.Printf("[DEBG] "+fmt, args...)
 }
 
-func (l *defaultLogger) Debug(debug bool) {
-	l.debug = debug
+// WithWriter sets the writer of the logger.
+func WithWriter(out io.Writer) func(*Impl) {
+	return func(l *Impl) {
+		l.out = out
+	}
+}
+
+// New returns a new Logger interface.
+// It uses stderr, has no prefix and uses the DefaultTimeFormat.
+func New(args ...func(*Impl)) *Impl {
+	l := &Impl{os.Stderr, DefaultTimeFormat}
+	for _, arg := range args {
+		arg(l)
+	}
+	return l
 }
